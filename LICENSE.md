@@ -1,2 +1,2 @@
 
-Copyright (C) 2019 tetraowl
+Copyright (C) 2019 Jonas Becker
