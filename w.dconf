@@ -1,0 +1,7 @@
+[
+     {
+       "procname": "cmd.exe",
+       "if": "explorer.exe",
+       "else": "explorer.exe"
+     }
+]

@@ -2,23 +2,11 @@
 
 
   {
-
     "procname": "java -jar /home/pi/GNB/projectBlue.jar",
-
     "if": "",
-
     "else": "cmd.exe"
-
   },
-
   {
-
-    "procname": "cmd.exe",
-
-    "if": "explorer.exe",
-
-    "else": "explorer.exe"
-
-  }
-
+  "linkconf": "H:\\Jonas\\Documents\\GitHub\\watcher\\w.dconf"
+}
 ]

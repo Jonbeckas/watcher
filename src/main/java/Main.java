@@ -1,23 +1,40 @@
 import org.json.JSONArray;
 import org.json.JSONObject;
-import toolbox.process.OSnotDetectedException;
-import toolbox.process.OSnotsupportedException;
+import toolbox.os.OSnotSupportedException;
+
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Stream;
+
+import static net.tetraowl.watcher.toolbox.JavaTools.javaMajorRelease;
+import static toolbox.process.ProcessTools.isRunning;
+
 
 public class Main {
     public static void main(String[] args) {
-        new Main();
+        new Main((args));
     }
-    public Main() {
+    public Main(String[] args) {
         if (javaMajorRelease()<8) {
-            System.out.println("Your Java Version is "+javaMajorRelease()+" you need Java version 8 or above to use this programm. ❌");
+            System.out.println("Your Java Version is "+javaMajorRelease()+" you need Java Version 8 or above to use this programm. ❌");
             System.exit(1);
         }
-        File file = new File("config.json");
+        File file;
+        if (args.length!=0 &&!args[0].equals("")) {
+            file = new File(args[0]);
+        } else {
+            file = new File("config.json");
+        }
+        if (!checkConfig(file)) {
+            if (args.length!=0&&!args[0].equals("")) {
+                System.out.println("Config file not found!\n Created new config file at "+args[0]+"❌");
+            }
+            System.out.println("Config file not found!\n Created new config file config.json ❌");
+            System.exit(1);
+        }
+        runCommands(file);
+
+    }
+    private boolean checkConfig(File file) {
         if(!file.exists() || file.isDirectory()) {
             try {
                 FileWriter writer = new FileWriter(file);
@@ -26,49 +43,50 @@ public class Main {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
-            System.out.println("Config file not found!\n Created new config.json ❌");
-            return;
+            return false;
         }
+        return true;
+    }
+
+    private void runCommands(File file) {
         try {
             String json = getContentFromFile(file);
             JSONArray jsonarray = new JSONArray(json);
             System.out.println("Config loadet ✔");
             for (int i = 0; i < jsonarray.length(); i++) {
                 JSONObject jsonobject = jsonarray.getJSONObject(i);
-                String proc = jsonobject.getString("procname");
-                String ifu = jsonobject.getString("if");
-                String elseu = jsonobject.getString("else");
-                boolean isRunning = isRunning(proc);
-                Runtime rt = Runtime.getRuntime();
-                if (isRunning&&!ifu.equals("")) {
-                    Process pr = rt.exec(ifu);
-                    System.out.println(proc+" is running\n started "+ifu+"\uD83D\uDE80");
-                } else if (!isRunning&&!elseu.equals("")){
-                    System.out.println(proc+" is not running\n started "+elseu+"\uD83D\uDE80");
-                    Process pr = rt.exec(elseu);
+                if (jsonobject.has("linkconf") && jsonobject.getString("linkconf")!=null) {
+                    File exConf = new File(jsonobject.getString("linkconf"));
+                    if (!checkConfig(exConf)) {
+                        System.out.println("Config file not found!\n Created new config file at "+jsonobject.getString("linkconf")+"❌");
+                    } else {
+                        runCommands(exConf);
+                    }
+                } else {
+                    String proc = jsonobject.getString("procname");
+                    String ifu = jsonobject.getString("if");
+                    String elseu = jsonobject.getString("else");
+                    boolean isRunning = isRunning(proc);
+                    Runtime rt = Runtime.getRuntime();
+                    if (isRunning&&!ifu.equals("")) {
+                        Process pr = rt.exec(ifu);
+                        System.out.println(proc+" is running\n started "+ifu+"\uD83D\uDE80");
+                    } else if (!isRunning&&!elseu.equals("")){
+                        System.out.println(proc+" is not running\n started "+elseu+"\uD83D\uDE80");
+                        Process pr = rt.exec(elseu);
+                    }
                 }
             }
             System.out.println("DONE");
-        } catch (Exception e) {
+        } catch (OSnotSupportedException e) {
+            System.out.println("No supported OS found!\n Program stopped! ❌");
+            System.exit(1);
+
+        } catch(Exception e) {
             e.printStackTrace();
         }
     }
-    private boolean isRunning(String prn) {
-        ArrayList<String> procs = null;
-        try {
-            procs = getRunningProcesses();
-        } catch (OSnotDetectedException e) {
-            System.out.println("No supported OS found!\n Program stopped! ❌");
-            System.exit(1);
-        }
-        for (String onep: procs) {
-            if (onep.contains(prn)) {
-                return true;
-            }
-        }
-        return false;
-    }
+
 
     private String getContentFromFile(File file) throws FileNotFoundException,IOException {
         StringBuilder builder = new StringBuilder();
@@ -83,55 +101,8 @@ public class Main {
         return builder.toString();
     }
 
-    private ArrayList<String> getRunningProcesses() throws OSnotDetectedException {
-        ArrayList<String> processes = new ArrayList<>();
-        try {
-            String process;
-            Process p = null;
-            if (getOS() == OS_LINUX) {
-                p = Runtime.getRuntime().exec("ps -few");
-            } else if(getOS() ==OS_WINDOWS) {
-                 p = Runtime.getRuntime().exec(System.getenv("windir") +"\\system32\\"+"tasklist.exe");
-            } else if (getOS() == OS_MAC) {
-                p = Runtime.getRuntime().exec("ps -e");
-            } else {
-                throw new OSnotsupportedException();
-            }
 
-            BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
-            while ((process = input.readLine()) != null) {
-                processes.add(process);
-            }
-            input.close();
-        } catch (Exception err) {
-            err.printStackTrace();
-        }
-        return processes;
-    }
-    public static final int OS_WINDOWS = 0;
-    public static final int  OS_LINUX = 1;
-    public static final int OS_MAC = 2;
-    private int getOS() throws OSnotDetectedException {
-        String OS = System.getProperty("os.name").toLowerCase();
-        if (OS.contains("win")) {
-            return OS_WINDOWS;
 
-        } else if (OS.indexOf("nix") >= 0 || OS.indexOf("nux") >= 0 || OS.indexOf("aix") > 0 ) {
-            return OS_LINUX;
-        } else if (OS.contains("mac")) {
-            return OS_MAC;
-        } else {
-            throw new OSnotDetectedException();
-        }
-    }
-    private int javaMajorRelease() {
-        String[] javaVersionElements = System.getProperty("java.runtime.version").split("\\.|_|-b");
-        int major = Integer.parseInt(javaVersionElements[0]);
-        if (major>1) {
-            return major;
-        } else {
-            return  Integer.parseInt(javaVersionElements[2]);
-        }
-    }
+
 
 }
