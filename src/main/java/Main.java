@@ -4,6 +4,9 @@ import toolbox.os.OSnotSupportedException;
 
 
 import java.io.*;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLDecoder;
 
 import static net.tetraowl.watcher.toolbox.JavaTools.javaMajorRelease;
 import static toolbox.process.ProcessTools.isRunning;
@@ -19,16 +22,18 @@ public class Main {
             System.exit(1);
         }
         File file;
+        String appPath = getJarUrl(Main.class);
+        String nPath = appPath+"/config.json";
         if (args.length!=0 &&!args[0].equals("")) {
             file = new File(args[0]);
         } else {
-            file = new File("config.json");
+            file = new File(nPath);
         }
         if (!checkConfig(file)) {
             if (args.length!=0&&!args[0].equals("")) {
                 System.out.println("Config file not found!\n Created new config file at "+args[0]+"❌");
             }
-            System.out.println("Config file not found!\n Created new config file config.json ❌");
+            System.out.println("Config file not found!\n Created new config file "+nPath+" ❌");
             System.exit(1);
         }
         runCommands(file);
@@ -106,3 +111,4 @@ public class Main {
 
 
 }
+
