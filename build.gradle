@@ -21,5 +21,5 @@ from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
     implementation group: 'org.json', name: 'json', version: '20190722'
-    implementation 'com.github.Jonbeckas:watcher.toolbox:1.0.1'
+    implementation 'com.github.Jonbeckas:watcher.toolbox:1.1.1'
 }

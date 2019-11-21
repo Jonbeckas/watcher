@@ -8,6 +8,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
 
+import static net.tetraowl.watcher.toolbox.JavaTools.getJarUrl;
 import static net.tetraowl.watcher.toolbox.JavaTools.javaMajorRelease;
 import static toolbox.process.ProcessTools.isRunning;
 
