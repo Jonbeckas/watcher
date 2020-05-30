@@ -1,3 +1,5 @@
+### Watcher is deprecated, please use [processWatcher](https://github.com/Jonbeckas/processWatcher) instead
+
 With watcher you can track processes and running a commandline command if there are running or not runnung.
 
 
